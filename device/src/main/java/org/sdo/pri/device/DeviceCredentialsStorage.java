@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.nio.channels.Channels;
@@ -30,10 +31,16 @@ class DeviceCredentialsStorage {
   private static final Logger myLogger = LoggerFactory.getLogger(DeviceCredentialsStorage.class);
   private final URI myInputUri;
   private final Path myOutputDir;
+  private final String deviceSerial;
 
-  DeviceCredentialsStorage(URI inputUri, Path outputDir) {
+  public String getDeviceSerial() {
+    return deviceSerial;
+  }
+
+  DeviceCredentialsStorage(URI inputUri, Path outputDir, String deviceS) {
     myInputUri = inputUri;
     myOutputDir = outputDir;
+    deviceSerial = deviceS;
   }
 
   DeviceCredentials load() {
@@ -52,6 +59,31 @@ class DeviceCredentialsStorage {
     }
 
     return null;
+  }
+
+  void saveDeviceSerial(DeviceCredentials deviceCredentials) throws IOException {
+    if (null == myOutputDir) {
+      myLogger.info("outputDir is null, credentials not saved");
+      return;
+    }
+
+    if (!myOutputDir.toFile().isDirectory()) {
+      Files.createDirectories(myOutputDir);
+    }
+
+    Path path = myOutputDir.resolve(deviceCredentials.getUuid() + ".serial");
+    Set<OpenOption> openOptions = new HashSet<>();
+
+    openOptions.add(StandardOpenOption.CREATE);
+    openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
+    openOptions.add(StandardOpenOption.WRITE);
+
+    try (
+            FileChannel channel = FileChannel.open(path, openOptions);
+            Writer writer = Channels.newWriter(channel, StandardCharsets.US_ASCII)) {
+      writer.write(getDeviceSerial());
+      myLogger.info("device serial saved to " + path.normalize().toAbsolutePath());
+    }
   }
 
   void store(DeviceCredentials deviceCredentials) throws IOException {

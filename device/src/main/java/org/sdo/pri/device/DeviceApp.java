@@ -134,6 +134,7 @@ public class DeviceApp {
         dc = di.call();
         if (null != dc) {
           deviceCredentialsStorage().store(dc);
+          deviceCredentialsStorage().saveDeviceSerial(dc);
           logger().info("device initialization ends");
 
         } else {
@@ -198,7 +199,7 @@ public class DeviceApp {
   // decisions about where and how to store them.
   @Bean
   DeviceCredentialsStorage deviceCredentialsStorage() {
-    return new DeviceCredentialsStorage(deviceCredentialsUri, outputDir);
+    return new DeviceCredentialsStorage(deviceCredentialsUri, outputDir, serial);
   }
 
   // The device's 'manufacturing mark', or 'm'.
